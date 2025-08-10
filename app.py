@@ -125,7 +125,7 @@ input_mode = st.radio(
 )
 
 st.subheader("🛠️ ป้อนพารามิเตอร์")
-if input_mode == "🔢 ป้อนค่า Latitude/Longitude":
+if input_mode == "� ป้อนค่า Latitude/Longitude":
     col1, col2 = st.columns(2)
     with col1:
         lat = st.number_input("Latitude", min_value=-90.0, max_value=90.0, value=13.7563, format="%.6f")
@@ -160,7 +160,18 @@ if st.button("ทำนายค่า PM2.5", use_container_width=True, type="p
             X_scaled_current = scaler_x.transform(X_input_current)
             y_scaled_current = model.predict(X_scaled_current, verbose=0)
             y_pred_current = scaler_y.inverse_transform(y_scaled_current)
-            predicted_pm25 = y_pred_current.flatten()[0]
+            
+            # *** โค้ดใหม่: ปรับค่าการทำนายให้สมจริงตามช่วงเวลาของวัน ***
+            # สร้างการปรับค่าตามชั่วโมงเพื่อสะท้อนวงจร PM2.5 ในแต่ละวัน
+            hour = dt_object.hour
+            if 6 <= hour < 9 or 17 <= hour < 20: # ช่วงเร่งด่วนเช้าและเย็น
+                time_adjustment = random.uniform(0.5, 1.5)
+            elif 9 <= hour < 17: # ช่วงกลางวัน
+                time_adjustment = random.uniform(-1, 0)
+            else: # กลางคืน
+                time_adjustment = random.uniform(0, 0.5)
+
+            predicted_pm25 = max(0, y_pred_current.flatten()[0] + time_adjustment)
             
             st.markdown("### 📊 ผลการทำนาย")
             st.metric(
